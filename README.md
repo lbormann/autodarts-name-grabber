@@ -84,6 +84,7 @@ Start the script:
 - -U / --autodarts_email
 - -P / --autodarts_password
 - -TP / --templates_path
+- -GI / --grab_interval
 
 
 
@@ -98,6 +99,11 @@ You should know your autodarts.io registered password. Make sure you disable 2FA
 *`-TP / --templates_path`*
 
 You need to set an absolute path to your template-file-directory. Moreover make sure the given path doesn't reside inside main-directory (autodarts-name-grabber).
+
+*`-GI / --grab_interval`*
+
+Determines how often (in seconds) names will be grabbed. Default is '60'
+
 
 
 

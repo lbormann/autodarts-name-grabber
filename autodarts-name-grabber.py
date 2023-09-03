@@ -39,7 +39,7 @@ AUTODART_REALM_NAME = 'autodarts'
 AUTODART_MATCHES_URL = 'https://api.autodarts.io/gs/v0/matches'
 
 
-GRAB_INTERVAL = 60
+DEFAULT_GRAB_INTERVAL = 60
 TEMPLATE_FILE_EXTENSION = '.csv'
 TEMPLATE_FILE_ENCODING = 'utf-8-sig'
 NAMES_BLACKLISTED = [
@@ -183,12 +183,15 @@ if __name__ == "__main__":
     ap.add_argument("-U", "--autodarts_email", required=True, help="Registered email address at " + AUTODART_URL)
     ap.add_argument("-P", "--autodarts_password", required=True, help="Registered password address at " + AUTODART_URL)
     ap.add_argument("-TP", "--templates_path", required=True, help="Absolute path to your templates")
+    ap.add_argument("-GI", "--grab_interval", type=int, required=False, default=DEFAULT_GRAB_INTERVAL, help="Grab interval in seconds")
     ap.add_argument("-DEB", "--debug", type=int, choices=range(0, 2), default=False, required=False, help="If '1', the application will output additional information")
     args = vars(ap.parse_args())
 
     AUTODART_USER_EMAIL = args['autodarts_email']                          
     AUTODART_USER_PASSWORD = args['autodarts_password']                     
     TEMPLATES_PATH = Path(args['templates_path'])
+    GRAB_INTERVAL = args['grab_interval']
+    if GRAB_INTERVAL < 0: GRAB_INTERVAL = 1
     DEBUG = args['debug']
 
 
