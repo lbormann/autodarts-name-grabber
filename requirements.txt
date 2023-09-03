@@ -1,0 +1,2 @@
+pyinstaller==5.9.0
+python-keycloak==2.13.2
