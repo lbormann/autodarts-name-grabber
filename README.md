@@ -2,6 +2,7 @@
 [![Downloads](https://img.shields.io/github/downloads/lbormann/autodarts-name-grabber/total.svg)](https://github.com/lbormann/autodarts-name-grabber/releases/latest)
 
 
+Grabs current player-names for autodarts.io
 
 
 ## INSTALL INSTRUCTION
