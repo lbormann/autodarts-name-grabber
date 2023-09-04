@@ -29,7 +29,7 @@ logger.addHandler(sh)
 
 
 
-VERSION = '1.0.0'
+VERSION = '1.0.1'
 
 AUTODART_URL = 'https://autodarts.io'
 AUTODART_AUTH_URL = 'https://login.autodarts.io/'
@@ -38,8 +38,8 @@ AUTODART_CLIENT_ID = 'autodarts-app'
 AUTODART_REALM_NAME = 'autodarts'
 AUTODART_MATCHES_URL = 'https://api.autodarts.io/gs/v0/matches'
 
-
 DEFAULT_GRAB_INTERVAL = 60
+
 TEMPLATE_FILE_EXTENSION = '.csv'
 TEMPLATE_FILE_ENCODING = 'utf-8-sig'
 NAMES_BLACKLISTED = [
@@ -54,6 +54,53 @@ NAMES_BLACKLISTED = [
     'bot level 9',
     'bot level 10',
     'bot level 11'
+]
+NAMES_INVALID_CHARACTERS = [
+    '1',
+    '2',
+    '3',
+    '4',
+    '5',
+    '6',
+    '7',
+    '8',
+    '9',
+    '0',
+    '@',
+    ',',
+    ':',
+    ';',
+    '_',
+    '*',
+    '#',
+    '?',
+    '|',
+    '~',
+    '\\',
+    '/',
+    '<',
+    '>',
+    '"',
+    '(',
+    ')',
+    '[',
+    ']',
+    '{',
+    '}',
+    '`',
+    '´',
+    '=',
+    '\'',
+    '&',
+    '$',
+    '%',
+    '§',
+    '²',
+    '³',
+    '^',
+    '!'
+    # '-',
+    # '.',
 ]
 
 
@@ -86,64 +133,56 @@ def receive_token_autodarts():
         ppe('Receive token failed', e)    
 
 def read_templates():
-    global files_names
-    files_names = {}
+    global files_entries
+    files_entries = {}
 
     # template_files = glob.glob(os.path.join(TEMPLATES_PATH, f"de-DE-v1{TEMPLATE_FILE_EXTENSION}"))
     template_files = glob.glob(os.path.join(TEMPLATES_PATH, f"*v*[0-9]{TEMPLATE_FILE_EXTENSION}"))
-    # print(template_files)
+    # ppi(template_files)
 
     for tf in template_files:
         with open(tf, "r", encoding=TEMPLATE_FILE_ENCODING) as read_file:
             lines = read_file.readlines()
 
         seen = set()
-        names = []
+        entries = []
         line_length = len(lines)
         for index, line in enumerate(lines):
-            name = line.split(';')[0].strip().lower()
+            sound_file_keys = line.split(';')
+            spoken = sound_file_keys[0].strip().lower()
 
-            if name not in seen:
+            sound_file_keys = sound_file_keys[1:] # remove spoken
+            sound_file_keys = [key for key in sound_file_keys if key not in ['', '\n']] # remove empty and new line
+
+            if spoken not in seen:
                 if index == (line_length - 1):
                     if not line.endswith("\n"):
                         line = f'{line}\n'
 
-                names.append((name, line))
-                seen.add(name)
+                entries.append((spoken, line, sound_file_keys))
+                seen.add(spoken)
 
-        files_names[tf] = names
+        files_entries[tf] = entries
 
-    # print(files_names)
+    # ppi(files_entries)
         
-def sanitize_name(name_raw):
+def validate_name(name_raw):
     name = name_raw.lower().strip()
 
-    if '@' in name:
+    if name in NAMES_BLACKLISTED:
         return ''
 
-    # Sonderzeichen und Zahlen am Anfang und am Ende einer Zeile entfernen
-    re1 = re.sub(r'^[\d.#_\-?´|+]+', '', name)
-    if re1 != name:
-        return ''
-
-    re2 = re.sub(r'[\d.#_\-?´|+]+$', '', name)
-    if re2 != name:
-        return ''
-
-    # Sonderzeichen und Zahlen, die nicht am Anfang und Ende einer Zeile stehen, behandeln
-    re3 = re.sub(r'[\d#_\-?´|+]', '', name)
-    if re3 != name:
-        return ''
-
-    re4 = re.sub(r'\.', ' ', name)
-    if re4 != name:
-        return ''
-
+    for invalid_char in NAMES_INVALID_CHARACTERS:
+        if invalid_char in name:
+            NAMES_BLACKLISTED.append(name)
+            ppi(f"{name} is not a valid name - blacklisted")
+            return ''
+        
     return name
 
 def grab():
     global accessToken
-    global files_names
+    global files_entries
 
     receive_token_autodarts()
     response = requests.get(AUTODART_MATCHES_URL, headers={'Authorization': 'Bearer ' + accessToken})
@@ -155,18 +194,20 @@ def grab():
     for match in m: 
         if 'players' in match:
             for p in match['players']:
-                name = sanitize_name(p['name'])
-                if name != '' and name not in NAMES_BLACKLISTED:
-                    for key in files_names:
-                        if name not in [t[0] for t in files_names[key]]:
+                name = validate_name(p['name'])
+
+                if name != '':
+                    for file in files_entries:
+                        files_entries_current = files_entries[file]
+                        if name not in [t[0] for t in files_entries_current] and name not in [t[2] for t in files_entries_current]:
                             line = f"{name};;\n"
-                            files_names[key].append((name, line))
-                            ppi(f"'{name}' added to '{key}'")
+                            files_entries_current.append((name, line, []))
+                            ppi(f"'{name}' added to '{file}'")
                     
-    for template_file, entries in files_names.items():
+    for template_file, entries in files_entries.items():
         with open(template_file, "w", encoding=TEMPLATE_FILE_ENCODING) as output_file:
             for index, entry in enumerate(entries):
-                name, line = entry
+                spoken, line, sound_file_keys  = entry
 
                 if index != len(entries) - 1:
                     output_file.write(line)
@@ -199,8 +240,8 @@ if __name__ == "__main__":
     global accessToken
     accessToken = None
 
-    global files_names
-    files_names = {}
+    global files_entries
+    files_entries = {}
 
 
 
