@@ -7,9 +7,7 @@ import argparse
 import requests
 import logging
 from urllib.parse import quote, unquote
-import re
 import glob
-# install python-keycloak==2.13.2
 from keycloak import KeycloakOpenID
 
 
@@ -29,7 +27,7 @@ logger.addHandler(sh)
 
 
 
-VERSION = '1.0.1'
+VERSION = '1.0.2'
 
 AUTODART_URL = 'https://autodarts.io'
 AUTODART_AUTH_URL = 'https://login.autodarts.io/'
@@ -175,12 +173,12 @@ def validate_name(name_raw):
     for invalid_char in NAMES_INVALID_CHARACTERS:
         if invalid_char in name:
             NAMES_BLACKLISTED.append(name)
-            ppi(f"{name} is not a valid name - blacklisted")
+            ppi(f"'{name}' is not a valid name - added to 'BLACKLIST'")
             return ''
         
     return name
 
-def grab():
+def grab_names():
     global accessToken
     global files_entries
 
@@ -259,9 +257,9 @@ if __name__ == "__main__":
     iteration = 0
     while True:
         try:
-            read_templates()
-            grab()
             iteration += 1
+            read_templates()
+            grab_names()  
             ppi(f"Grab-Iteration {iteration} finished - sleep for {GRAB_INTERVAL} seconds")
         except Exception as e:
             ppe(f"Grab-Iteration {iteration} failed: ", e)

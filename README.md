@@ -2,7 +2,7 @@
 [![Downloads](https://img.shields.io/github/downloads/lbormann/autodarts-name-grabber/total.svg)](https://github.com/lbormann/autodarts-name-grabber/releases/latest)
 
 
-Grabs current player-names for autodarts.io
+Grabs player-names for https://autodarts.io
 
 
 ## INSTALL INSTRUCTION
@@ -29,14 +29,6 @@ Go to download-directory and type:
 
     pip3 install -r requirements.txt
 
-
-
-
-
-
-## SETUP TEMPLATE-FILES
-
-TODO
 
 
 
