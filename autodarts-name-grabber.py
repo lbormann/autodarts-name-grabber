@@ -27,7 +27,7 @@ logger.addHandler(sh)
 
 
 
-VERSION = '1.0.2'
+VERSION = '1.0.3'
 
 AUTODART_URL = 'https://autodarts.io'
 AUTODART_AUTH_URL = 'https://login.autodarts.io/'
