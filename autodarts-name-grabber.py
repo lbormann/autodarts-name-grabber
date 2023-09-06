@@ -189,28 +189,31 @@ def grab_names():
     m = json.loads(response.text)  
     # ppi(json.dumps(m, indent = 4, sort_keys = True))
     
+    new_name = False
     for match in m: 
         if 'players' in match:
             for p in match['players']:
-                name = validate_name(p['name'])
+                if 'name' in p:
+                    name = validate_name(p['name'])
+                    if name != '':
+                        for file in files_entries:
+                            files_entries_current = files_entries[file]
+                            if name not in [t[0] for t in files_entries_current] and name not in [t[2] for t in files_entries_current]:
+                                new_name = True
+                                line = f"{name};;\n"
+                                files_entries_current.append((name, line, []))
+                                ppi(f"'{name}' added to '{file}'")
 
-                if name != '':
-                    for file in files_entries:
-                        files_entries_current = files_entries[file]
-                        if name not in [t[0] for t in files_entries_current] and name not in [t[2] for t in files_entries_current]:
-                            line = f"{name};;\n"
-                            files_entries_current.append((name, line, []))
-                            ppi(f"'{name}' added to '{file}'")
-                    
-    for template_file, entries in files_entries.items():
-        with open(template_file, "w", encoding=TEMPLATE_FILE_ENCODING) as output_file:
-            for index, entry in enumerate(entries):
-                spoken, line, sound_file_keys  = entry
+    if new_name:     
+        for template_file, entries in files_entries.items():
+            with open(template_file, "w", encoding=TEMPLATE_FILE_ENCODING) as output_file:
+                for index, entry in enumerate(entries):
+                    spoken, line, sound_file_keys  = entry
 
-                if index != len(entries) - 1:
-                    output_file.write(line)
-                else:
-                    output_file.write(line.rstrip('\n'))
+                    if index != len(entries) - 1:
+                        output_file.write(line)
+                    else:
+                        output_file.write(line.rstrip('\n'))
 
 
             
