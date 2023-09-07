@@ -9,6 +9,7 @@ import logging
 from urllib.parse import quote, unquote
 import glob
 from datetime import datetime
+import signal
 from keycloak import KeycloakOpenID
 
 
@@ -105,6 +106,8 @@ NAMES_INVALID_CHARACTERS = [
 
 
 
+
+
 def ppi(message, info_object = None, prefix = '\r\n'):
     logger.info(prefix + str(message))
     if info_object != None:
@@ -115,6 +118,11 @@ def ppe(message, error_object):
     if DEBUG:
         logger.exception("\r\n" + str(error_object))
 
+def handle_signal(signum, frame):
+    global should_terminate
+    should_terminate = True
+
+signal.signal(signal.SIGTERM, handle_signal)
 
 def receive_token_autodarts():
     try:
@@ -237,7 +245,8 @@ if __name__ == "__main__":
     if GRAB_INTERVAL < 0: GRAB_INTERVAL = 1
     DEBUG = args['debug']
 
-
+    global should_terminate
+    should_terminate = False
 
     global accessToken
     accessToken = None
@@ -261,6 +270,10 @@ if __name__ == "__main__":
     iteration = 0
     while True:
         try:
+            if should_terminate:
+                ppi(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: Exit-Signal received")
+                break
+
             iteration += 1
             read_templates()
             grab_names()  
