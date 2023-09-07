@@ -8,6 +8,7 @@ import requests
 import logging
 from urllib.parse import quote, unquote
 import glob
+from datetime import datetime
 from keycloak import KeycloakOpenID
 
 
@@ -27,7 +28,7 @@ logger.addHandler(sh)
 
 
 
-VERSION = '1.0.3'
+VERSION = '1.0.4'
 
 AUTODART_URL = 'https://autodarts.io'
 AUTODART_AUTH_URL = 'https://login.autodarts.io/'
@@ -226,7 +227,7 @@ if __name__ == "__main__":
     ap.add_argument("-P", "--autodarts_password", required=True, help="Registered password address at " + AUTODART_URL)
     ap.add_argument("-TP", "--templates_path", required=True, help="Absolute path to your templates")
     ap.add_argument("-GI", "--grab_interval", type=int, required=False, default=DEFAULT_GRAB_INTERVAL, help="Grab interval in seconds")
-    ap.add_argument("-DEB", "--debug", type=int, choices=range(0, 2), default=False, required=False, help="If '1', the application will output additional information")
+    ap.add_argument("-DEB", "--debug", type=int, choices=range(0, 2), default=True, required=False, help="If '1', the application will output additional information")
     args = vars(ap.parse_args())
 
     AUTODART_USER_EMAIL = args['autodarts_email']                          
@@ -263,9 +264,10 @@ if __name__ == "__main__":
             iteration += 1
             read_templates()
             grab_names()  
-            ppi(f"Grab-Iteration {iteration} finished - sleep for {GRAB_INTERVAL} seconds")
+            
+            ppi(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: Grab-Iteration {iteration} finished - sleep for {GRAB_INTERVAL} seconds")
         except Exception as e:
-            ppe(f"Grab-Iteration {iteration} failed: ", e)
+            ppe(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}:Grab-Iteration {iteration} failed: ", e)
         finally:
             time.sleep(GRAB_INTERVAL)
 
