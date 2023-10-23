@@ -6,10 +6,10 @@ import platform
 import argparse
 import requests
 import logging
-from urllib.parse import quote, unquote
 import glob
 from datetime import datetime
 import signal
+from mask import mask
 from keycloak import KeycloakOpenID
 
 
@@ -26,10 +26,11 @@ logger.setLevel(logging.INFO)
 logger.addHandler(sh)
 
 
+main_directory = os.path.dirname(os.path.realpath(__file__))
 
 
 
-VERSION = '1.0.6'
+VERSION = '1.0.7'
 
 AUTODART_URL = 'https://autodarts.io'
 AUTODART_AUTH_URL = 'https://login.autodarts.io/'
@@ -39,22 +40,11 @@ AUTODART_REALM_NAME = 'autodarts'
 AUTODART_MATCHES_URL = 'https://api.autodarts.io/gs/v0/matches'
 
 DEFAULT_GRAB_INTERVAL = 60
+NAMES_BLACKLISTED_FILE = "blacklisted.txt"
 
 TEMPLATE_FILE_EXTENSION = '.csv'
 TEMPLATE_FILE_ENCODING = 'utf-8-sig'
-NAMES_BLACKLISTED = [
-    'bot level 1',
-    'bot level 2',
-    'bot level 3',
-    'bot level 4',
-    'bot level 5',
-    'bot level 6',
-    'bot level 7',
-    'bot level 8',
-    'bot level 9',
-    'bot level 10',
-    'bot level 11'
-]
+NAMES_BLACKLISTED = []
 NAMES_INVALID_CHARACTERS = [
     '1',
     '2',
@@ -158,6 +148,20 @@ def receive_token_autodarts():
         # ppi(token)
     except Exception as e:
         ppe('Receive token failed', e)    
+
+def read_blacklist():
+    path_to_names_blacklisted_file = os.path.join(main_directory, NAMES_BLACKLISTED_FILE)
+    if os.path.exists(path_to_names_blacklisted_file):
+        with open(path_to_names_blacklisted_file, 'r') as bnf:
+            names_blacklisted = list(set(line.strip() for line in bnf))
+            for nbd in names_blacklisted:
+                NAMES_BLACKLISTED.append(nbd)
+
+def write_blacklist():
+    path_to_names_blacklisted_file = os.path.join(main_directory, NAMES_BLACKLISTED_FILE) 
+    with open(path_to_names_blacklisted_file, 'w') as bnf:
+        for nbd in NAMES_BLACKLISTED:
+            bnf.write(nbd + '\n')
 
 def read_templates():
     global files_entries
@@ -270,6 +274,17 @@ if __name__ == "__main__":
     if GRAB_INTERVAL < 0: GRAB_INTERVAL = 1
     DEBUG = args['debug']
 
+    if DEBUG:
+        ppi('Started with following arguments:')
+        data_to_mask = {
+            "autodarts_email": "email", 
+            "autodarts_password": "str"
+        }
+        masked_args = mask(args, data_to_mask)
+        ppi(json.dumps(masked_args, indent=4))
+
+
+
     global should_terminate
     should_terminate = False
 
@@ -292,6 +307,8 @@ if __name__ == "__main__":
     ppi('RUNNING OS: ' + osType + ' | ' + osName + ' | ' + osRelease, None, '')
     ppi('\r\n', None, '')
 
+    read_blacklist()
+
     iteration = 0
     while True:
         try:
@@ -308,6 +325,8 @@ if __name__ == "__main__":
             ppe(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}:Grab-Iteration {iteration} failed: ", e)
         finally:
             time.sleep(GRAB_INTERVAL)
+
+    write_blacklist()
 
 
 
