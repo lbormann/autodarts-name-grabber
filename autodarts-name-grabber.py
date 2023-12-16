@@ -34,7 +34,6 @@ VERSION = '1.0.8'
 
 AUTODART_URL = 'https://autodarts.io'
 AUTODART_AUTH_URL = 'https://login.autodarts.io/'
-AUTODART_AUTH_TICKET_URL = 'https://api.autodarts.io/ms/v0/ticket'
 AUTODART_CLIENT_ID = 'autodarts-app'
 AUTODART_REALM_NAME = 'autodarts'
 AUTODART_MATCHES_URL = 'https://api.autodarts.io/gs/v0/matches'
