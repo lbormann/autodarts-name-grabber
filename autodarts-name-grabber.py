@@ -30,7 +30,7 @@ main_directory = os.path.dirname(os.path.realpath(__file__))
 
 
 
-VERSION = '1.0.8'
+VERSION = '1.0.9'
 
 AUTODART_URL = 'https://autodarts.io'
 AUTODART_AUTH_URL = 'https://login.autodarts.io/'
@@ -195,7 +195,21 @@ def read_templates():
         files_entries[tf] = entries
 
     # ppi(files_entries)
-        
+
+def write_templates():
+    global files_entries
+
+    for template_file, entries in files_entries.items():
+        with open(template_file, "w", encoding=TEMPLATE_FILE_ENCODING) as output_file:
+            for index, entry in enumerate(entries):
+                spoken, line, sound_file_keys  = entry
+
+                if index != len(entries) - 1:
+                    output_file.write(line)
+                else:
+                    output_file.write(line.rstrip('\n'))
+
+
 def validate_name(name_raw):
     name = name_raw.lower().strip()
 
@@ -226,31 +240,34 @@ def grab_names():
     m = json.loads(response.text)  
     # ppi(json.dumps(m, indent = 4, sort_keys = True))
     
-    new_name = False
+    # new_name = False
     for match in m: 
-        if 'players' in match:
-            for p in match['players']:
-                if 'name' in p:
-                    name = validate_name(p['name'])
-                    if name != '':
-                        for file in files_entries:
-                            files_entries_current = files_entries[file]
-                            if name not in [t[0] for t in files_entries_current] and name not in [t[2] for t in files_entries_current]:
-                                new_name = True
-                                line = f"{name};;\n"
-                                files_entries_current.append((name, line, []))
-                                ppi(f"'{name}' added to '{file}'")
+        if 'players' not in match:
+            continue
+        for p in match['players']:
+            if 'name' not in p:
+                continue
+            name = validate_name(p['name'])
+            if name == '':
+                continue
+            for file in files_entries:
+                files_entries_current = files_entries[file]
+                if name not in [t[0] for t in files_entries_current] and name not in [t[2] for t in files_entries_current]:
+                    # new_name = True
+                    line = f"{name};;\n"
+                    files_entries_current.append((name, line, []))
+                    ppi(f"'{name}' added to '{file}'")
 
-    if new_name:     
-        for template_file, entries in files_entries.items():
-            with open(template_file, "w", encoding=TEMPLATE_FILE_ENCODING) as output_file:
-                for index, entry in enumerate(entries):
-                    spoken, line, sound_file_keys  = entry
+    # if new_name:     
+        # for template_file, entries in files_entries.items():
+        #     with open(template_file, "w", encoding=TEMPLATE_FILE_ENCODING) as output_file:
+        #         for index, entry in enumerate(entries):
+        #             spoken, line, sound_file_keys  = entry
 
-                    if index != len(entries) - 1:
-                        output_file.write(line)
-                    else:
-                        output_file.write(line.rstrip('\n'))
+        #             if index != len(entries) - 1:
+        #                 output_file.write(line)
+        #             else:
+        #                 output_file.write(line.rstrip('\n'))
 
 
             
@@ -283,7 +300,6 @@ if __name__ == "__main__":
         ppi(json.dumps(masked_args, indent=4))
 
 
-
     global should_terminate
     should_terminate = False
 
@@ -307,6 +323,7 @@ if __name__ == "__main__":
     ppi('\r\n', None, '')
 
     read_blacklist()
+    read_templates()
 
     iteration = 0
     while True:
@@ -316,16 +333,15 @@ if __name__ == "__main__":
                 break
 
             iteration += 1
-            read_templates()
             grab_names()  
-            
             ppi(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: Grab-Iteration {iteration} finished - sleep for {GRAB_INTERVAL} seconds")
         except Exception as e:
-            ppe(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}:Grab-Iteration {iteration} failed: ", e)
+            ppe(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: Grab-Iteration {iteration} failed: ", e)
         finally:
             time.sleep(GRAB_INTERVAL)
 
     write_blacklist()
+    write_templates()
 
 
 
