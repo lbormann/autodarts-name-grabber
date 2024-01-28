@@ -1,3 +1,8 @@
+## 1.0.10
+
+- add character count limitation
+
+
 ## 1.0.9
 
 - stop permanent read/write to disk

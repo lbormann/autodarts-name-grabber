@@ -30,7 +30,7 @@ main_directory = os.path.dirname(os.path.realpath(__file__))
 
 
 
-VERSION = '1.0.9'
+VERSION = '1.0.10'
 
 AUTODART_URL = 'https://autodarts.io'
 AUTODART_AUTH_URL = 'https://login.autodarts.io/'
@@ -216,15 +216,20 @@ def validate_name(name_raw):
     if name in NAMES_BLACKLISTED:
         return ''
 
+    if len(name) > 25:
+        NAMES_BLACKLISTED.append(name)
+        ppi(f"'{name}' has to many characters - added to 'BLACKLIST'")
+        return ''
+
     for invalid_char in NAMES_INVALID_CHARACTERS:
         if invalid_char in name:
             NAMES_BLACKLISTED.append(name)
-            ppi(f"'{name}' is not a valid name - added to 'BLACKLIST'")
+            ppi(f"'{name}' contains invalid character - added to 'BLACKLIST'")
             return ''
         
     if contains_emoji(name):
         NAMES_BLACKLISTED.append(name)
-        ppi(f"'{name}' is not a valid name - added to 'BLACKLIST'")
+        ppi(f"'{name}' contains invalid emoji - added to 'BLACKLIST'")
         return ''
         
     return name
