@@ -1,1 +1,2 @@
+- add check for names consist completely of punctuation
 - add license

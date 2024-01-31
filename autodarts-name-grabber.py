@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 import time
+from datetime import datetime, timedelta
 import json
 import platform
 import argparse
@@ -30,12 +31,13 @@ main_directory = os.path.dirname(os.path.realpath(__file__))
 
 
 
-VERSION = '1.0.10'
+VERSION = '1.0.11'
 
 AUTODART_URL = 'https://autodarts.io'
 AUTODART_AUTH_URL = 'https://login.autodarts.io/'
-AUTODART_CLIENT_ID = 'autodarts-app'
+AUTODART_CLIENT_ID = 'wusaaa-caller-for-autodarts'
 AUTODART_REALM_NAME = 'autodarts'
+AUTODART_CLIENT_SECRET = "4hg5d4fddW7rqgoY8gZ42aMpi2vjLkzf"
 AUTODART_MATCHES_URL = 'https://api.autodarts.io/gs/v0/matches'
 
 DEFAULT_GRAB_INTERVAL = 60
@@ -133,20 +135,39 @@ def contains_emoji(s):
                 return True
     return False
 
-def receive_token_autodarts():
+def auth_autodarts():
     try:
         global accessToken
-
-        # Configure client
+        global refreshToken
+        global tokenExpiresAt
+                 
         keycloak_openid = KeycloakOpenID(server_url = AUTODART_AUTH_URL,
                                             client_id = AUTODART_CLIENT_ID,
+                                            client_secret_key = AUTODART_CLIENT_SECRET,
                                             realm_name = AUTODART_REALM_NAME,
                                             verify = True)
-        token = keycloak_openid.token(AUTODART_USER_EMAIL, AUTODART_USER_PASSWORD)
-        accessToken = token['access_token']
-        # ppi(token)
+        
+        if accessToken is None or refreshToken is None:
+            token = keycloak_openid.token(AUTODART_USER_EMAIL, AUTODART_USER_PASSWORD)
+            # ppi("LOGIN: ", token)
+            accessToken = token['access_token']
+            refreshToken = token['refresh_token']
+            tokenExpiresAt = datetime.now() + timedelta(seconds=int(0.9 * token["expires_in"] if token else 0))
+        else:
+            now = datetime.now()
+            if tokenExpiresAt <= now:
+                token = keycloak_openid.refresh_token(refreshToken)
+                # ppi("LOGIN REFRESHED: ", token)
+                accessToken = token['access_token']
+                refreshToken = token['refresh_token']
+                tokenExpiresAt = datetime.now() + timedelta(seconds=int(0.9 * token["expires_in"] if token else 0))
+            # else:
+            #     ppi("TOKEN VALID .." + str(tokenExpiresAt) + " vs " + str(now))
     except Exception as e:
-        ppe('Receive token failed', e)    
+        accessToken = None
+        refreshToken = None
+        tokenExpiresAt = None
+        ppe('Login failed: check your email address and password. 2FA must be turned off.', e)   
 
 def read_blacklist():
     path_to_names_blacklisted_file = os.path.join(main_directory, NAMES_BLACKLISTED_FILE)
@@ -238,7 +259,7 @@ def grab_names():
     global accessToken
     global files_entries
 
-    receive_token_autodarts()
+    auth_autodarts()
     response = requests.get(AUTODART_MATCHES_URL, headers={'Authorization': 'Bearer ' + accessToken})
     response.raise_for_status()
 
@@ -310,6 +331,12 @@ if __name__ == "__main__":
 
     global accessToken
     accessToken = None
+
+    global refreshToken
+    refreshToken = None
+
+    global tokenExpiresAt
+    tokenExpiresAt = None
 
     global files_entries
     files_entries = {}

@@ -1,3 +1,8 @@
+## 1.0.11
+
+- fix token-requests
+
+
 ## 1.0.10
 
 - add character count limitation
